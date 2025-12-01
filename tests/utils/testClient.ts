@@ -127,6 +127,34 @@ class TestClient {
     });
   }
 
+  async zSendMany(
+    fromAddress: string,
+    recipients: Array<{ address: string; amount: number; memo?: string }>,
+    minconf?: number,
+    fee?: number,
+    privacyPolicy?: string
+  ) {
+    return this.client.post("/api/zcash/transaction/z_sendmany", {
+      fromAddress,
+      recipients,
+      minconf,
+      fee,
+      privacyPolicy,
+    });
+  }
+
+  async zGetOperationStatus(operationIds?: string[]) {
+    return this.client.post("/api/zcash/transaction/z_getoperationstatus", {
+      operationIds,
+    });
+  }
+
+  async zGetOperationResult(operationIds?: string[]) {
+    return this.client.post("/api/zcash/transaction/z_getoperationresult", {
+      operationIds,
+    });
+  }
+
   // Address validation
   async validateAddress(address: string) {
     return this.client.get(`/api/zcash/address/validate/${address}`);

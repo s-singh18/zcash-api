@@ -488,6 +488,95 @@ class ZCashController {
       next(error);
     }
   }
+
+  /**
+   * Send to multiple recipients using z_sendmany
+   */
+  async zSendMany(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { fromAddress, recipients, minconf, fee, privacyPolicy } = req.body;
+
+      if (!fromAddress || !recipients || !Array.isArray(recipients) || recipients.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: "fromAddress and recipients array are required",
+        });
+      }
+
+      // Validate recipients
+      for (const recipient of recipients) {
+        if (!recipient.address || recipient.amount === undefined) {
+          return res.status(400).json({
+            success: false,
+            error: "Each recipient must have address and amount",
+          });
+        }
+      }
+
+      const operationId = await zcashService.zSendMany(
+        fromAddress,
+        recipients,
+        minconf,
+        fee,
+        privacyPolicy
+      );
+
+      res.json({
+        success: true,
+        data: { operationId },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Get status of async operations
+   */
+  async zGetOperationStatus(req: Request, res: Response, next: NextFunction) {
+    try {
+      const operationIds = req.body.operationIds;
+
+      if (operationIds && !Array.isArray(operationIds)) {
+        return res.status(400).json({
+          success: false,
+          error: "operationIds must be an array",
+        });
+      }
+
+      const status = await zcashService.zGetOperationStatus(operationIds);
+      res.json({
+        success: true,
+        data: status,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Get result of completed operations
+   */
+  async zGetOperationResult(req: Request, res: Response, next: NextFunction) {
+    try {
+      const operationIds = req.body.operationIds;
+
+      if (operationIds && !Array.isArray(operationIds)) {
+        return res.status(400).json({
+          success: false,
+          error: "operationIds must be an array",
+        });
+      }
+
+      const result = await zcashService.zGetOperationResult(operationIds);
+      res.json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export default new ZCashController();

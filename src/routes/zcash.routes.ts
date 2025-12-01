@@ -30,6 +30,9 @@ router.get("/transaction/:txid", zcashController.getTransaction);
 router.get("/transactions", zcashController.listTransactions);
 router.get("/transaction/:txid/raw", zcashController.getRawTransaction);
 router.post("/transaction/send", zcashController.sendToAddress);
+router.post("/transaction/z_sendmany", zcashController.zSendMany);
+router.post("/transaction/z_getoperationstatus", zcashController.zGetOperationStatus);
+router.post("/transaction/z_getoperationresult", zcashController.zGetOperationResult);
 
 // Address validation
 router.get("/address/validate/:address", zcashController.validateAddress);

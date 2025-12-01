@@ -59,3 +59,34 @@ export interface AccountBalanceResponse {
   pools: AccountBalancePools;
   minimum_confirmations: number;
 }
+
+export interface ZSendManyRecipient {
+  address: string;
+  amount: number;
+  memo?: string;
+}
+
+export type PrivacyPolicy =
+  | "FullPrivacy"
+  | "LegacyCompat"
+  | "AllowRevealedAmounts"
+  | "AllowRevealedRecipients"
+  | "AllowRevealedSenders"
+  | "AllowFullyTransparent"
+  | "AllowLinkingAccountAddresses"
+  | "NoPrivacy";
+
+export interface ZOperationStatus {
+  id: string;
+  status: "queued" | "executing" | "success" | "failed" | "cancelled";
+  creation_time: number;
+  result?: {
+    txid: string;
+  };
+  error?: {
+    code: number;
+    message: string;
+  };
+  method: string;
+  params: any;
+}

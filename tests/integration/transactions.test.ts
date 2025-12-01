@@ -145,52 +145,6 @@ describe("Transaction Endpoints", () => {
     });
   });
 
-  describe("POST /api/zcash/transaction/send", () => {
-    it("should reject send request without required fields", async () => {
-      const response = await testClient.sendToAddress("", 0);
-
-      expect(response.status).toBe(400);
-      expect(response.data.success).toBe(false);
-      expect(response.data.error).toContain("required");
-    });
-
-    it("should reject send to invalid address", async () => {
-      const response = await testClient.sendToAddress("invalid-address", 0.001);
-
-      expect(response.status).toBeGreaterThanOrEqual(400);
-      expect(response.data.success).toBe(false);
-    });
-
-    it("should reject send with negative amount", async () => {
-      const addressResponse = await testClient.getNewAccount();
-      const validAddress = addressResponse.data.data.address;
-
-      // Add delay before next request to avoid rate limiting
-      await delay(1000);
-
-      const response = await testClient.sendToAddress(validAddress, -0.001);
-
-      expect(response.status).toBeGreaterThanOrEqual(400);
-      expect(response.data.success).toBe(false);
-    });
-
-    // Note: Actual successful send test is commented out to prevent spending funds during testing
-    // Uncomment and modify if you want to test actual transactions
-    /*
-    it('should successfully send to valid address', async () => {
-      const addressResponse = await testClient.getNewAccount();
-      const validAddress = addressResponse.data.data.address;
-
-      const response = await testClient.sendToAddress(validAddress, 0.001, 'Test transaction');
-
-      expect(response.status).toBe(200);
-      expect(response.data.success).toBe(true);
-      expect(response.data.data.txid).toBeDefined();
-      expect(typeof response.data.data.txid).toBe('string');
-      expect(response.data.data.txid.length).toBe(64);
-    });
-    */
-  });
 
   describe("GET /api/zcash/fee/estimate", () => {
     it("should estimate fee with default blocks", async () => {

@@ -1,6 +1,13 @@
 import axios, { AxiosInstance } from "axios";
 import config from "../config/config";
-import { ZCashRPCRequest, ZCashRPCResponse, AccountBalanceResponse } from "../types/zcash.types";
+import {
+  ZCashRPCRequest,
+  ZCashRPCResponse,
+  AccountBalanceResponse,
+  ZSendManyRecipient,
+  PrivacyPolicy,
+  ZOperationStatus
+} from "../types/zcash.types";
 
 class ZCashService {
   private client: AxiosInstance;
@@ -219,6 +226,49 @@ class ZCashService {
    */
   async listAddresses() {
     return this.rpcCall("listaddresses");
+  }
+
+  /**
+   * Send a transaction with multiple recipients using z_sendmany
+   * Returns an operation ID that can be used to check the status
+   */
+  async zSendMany(
+    fromAddress: string,
+    recipients: ZSendManyRecipient[],
+    minconf?: number,
+    fee?: number,
+    privacyPolicy?: PrivacyPolicy
+  ) {
+    const params: any[] = [fromAddress, recipients];
+
+    if (minconf !== undefined) params.push(minconf);
+    if (fee !== undefined) {
+      if (minconf === undefined) params.push(10); // default minconf
+      params.push(fee);
+    }
+    if (privacyPolicy !== undefined) {
+      if (minconf === undefined) params.push(10); // default minconf
+      if (fee === undefined) params.push(null); // null for default fee
+      params.push(privacyPolicy);
+    }
+
+    return this.rpcCall<string>("z_sendmany", params);
+  }
+
+  /**
+   * Get the status of async operations
+   */
+  async zGetOperationStatus(operationIds?: string[]) {
+    const params = operationIds ? [operationIds] : [];
+    return this.rpcCall<ZOperationStatus[]>("z_getoperationstatus", params);
+  }
+
+  /**
+   * Get the result of completed operations and remove them from memory
+   */
+  async zGetOperationResult(operationIds?: string[]) {
+    const params = operationIds ? [operationIds] : [];
+    return this.rpcCall<ZOperationStatus[]>("z_getoperationresult", params);
   }
 }
 
