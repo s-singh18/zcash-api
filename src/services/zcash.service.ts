@@ -1,36 +1,37 @@
-import axios, { AxiosInstance } from 'axios';
-import config from '../config/config';
-import { ZCashRPCRequest, ZCashRPCResponse } from '../types/zcash.types';
+import axios, { AxiosInstance } from "axios";
+import config from "../config/config";
+import { ZCashRPCRequest, ZCashRPCResponse, AccountBalanceResponse } from "../types/zcash.types";
 
 class ZCashService {
   private client: AxiosInstance;
-  private requestId: number = 0;
 
   constructor() {
     this.client = axios.create({
       baseURL: config.zcash.rpcUrl,
+      auth: {
+        username: config.zcash.rpcUsername,
+        password: config.zcash.rpcPassword,
+      },
       headers: {
-        'accept': 'application/json',
-        'content-type': 'application/json',
-        'x-api-key': config.zcash.apiKey,
+        "Content-Type": "text/plain",
       },
       timeout: 30000,
     });
   }
 
   /**
-   * Make a generic RPC call to the ZCash node via Tatum API
+   * Make a generic RPC call to the ZCash node via JSON-RPC
    */
   async rpcCall<T = any>(method: string, params: any[] = []): Promise<T> {
     const request: ZCashRPCRequest = {
-      jsonrpc: '2.0',
-      id: ++this.requestId,
+      jsonrpc: "1.0",
+      id: "express-rpc",
       method,
       params,
     };
 
     try {
-      const response = await this.client.post<ZCashRPCResponse<T>>('', request);
+      const response = await this.client.post<ZCashRPCResponse<T>>("", request);
 
       if (response.data.error) {
         throw new Error(
@@ -53,91 +54,126 @@ class ZCashService {
    * Get blockchain information
    */
   async getBlockchainInfo() {
-    return this.rpcCall('getblockchaininfo');
+    return this.rpcCall("getblockchaininfo");
   }
 
   /**
    * Get wallet information
    */
   async getWalletInfo() {
-    return this.rpcCall('getwalletinfo');
+    return this.rpcCall("getwalletinfo");
   }
 
   /**
    * Get balance
    */
   async getBalance(minConfirmations: number = 1) {
-    return this.rpcCall('getbalance', ['*', minConfirmations]);
+    return this.rpcCall("getbalance", ["*", minConfirmations]);
   }
 
   /**
-   * Get new address
+   * Get new account
    */
-  async getNewAddress(account: string = '') {
-    return this.rpcCall<string>('getnewaddress', [account]);
+  async getNewAccount() {
+    return this.rpcCall<{ account: number }>("z_getnewaccount");
+  }
+
+  /**
+   * Get address for account
+   */
+  async getAddressForAccount(account: number, diversifierIndex?: number) {
+    const params = diversifierIndex !== undefined ? [account, [diversifierIndex]] : [account];
+    return this.rpcCall<{ receiver_types: string[]; address: string }>("z_getaddressforaccount", params);
+  }
+
+  /**
+   * Get balance for account
+   */
+  async getBalanceForAccount(account: number, minconf?: number, asOfHeight?: number) {
+    const params: any[] = [account];
+    if (minconf !== undefined) params.push(minconf);
+    if (asOfHeight !== undefined) params.push(asOfHeight);
+    return this.rpcCall<AccountBalanceResponse>("z_getbalanceforaccount", params);
+  }
+
+  /**
+   * Dump private key for a transparent address
+   */
+  async dumpPrivKey(address: string) {
+    return this.rpcCall<string>("dumpprivkey", [address]);
+  }
+
+  /**
+   * Import private key
+   */
+  async importPrivKey(privateKey: string, label?: string, rescan?: boolean) {
+    const params: any[] = [privateKey];
+    if (label !== undefined) params.push(label);
+    if (rescan !== undefined) params.push(rescan);
+    return this.rpcCall("importprivkey", params);
   }
 
   /**
    * Get transaction by txid
    */
   async getTransaction(txid: string) {
-    return this.rpcCall('gettransaction', [txid]);
+    return this.rpcCall("gettransaction", [txid]);
   }
 
   /**
    * List transactions
    */
   async listTransactions(count: number = 10, skip: number = 0) {
-    return this.rpcCall('listtransactions', ['*', count, skip]);
+    return this.rpcCall("listtransactions", ["*", count, skip]);
   }
 
   /**
    * Send to address
    */
-  async sendToAddress(address: string, amount: number, comment: string = '') {
-    return this.rpcCall<string>('sendtoaddress', [address, amount, comment]);
+  async sendToAddress(address: string, amount: number, comment: string = "") {
+    return this.rpcCall<string>("sendtoaddress", [address, amount, comment]);
   }
 
   /**
    * Validate address
    */
   async validateAddress(address: string) {
-    return this.rpcCall('validateaddress', [address]);
+    return this.rpcCall("validateaddress", [address]);
   }
 
   /**
    * Get block by hash
    */
   async getBlock(blockhash: string, verbosity: number = 1) {
-    return this.rpcCall('getblock', [blockhash, verbosity]);
+    return this.rpcCall("getblock", [blockhash, verbosity]);
   }
 
   /**
    * Get block count
    */
   async getBlockCount() {
-    return this.rpcCall<number>('getblockcount');
+    return this.rpcCall<number>("getblockcount");
   }
 
   /**
    * Get block hash by height
    */
   async getBlockHash(height: number) {
-    return this.rpcCall<string>('getblockhash', [height]);
+    return this.rpcCall<string>("getblockhash", [height]);
   }
 
   /**
    * Get network info
    */
   async getNetworkInfo() {
-    return this.rpcCall('getnetworkinfo');
+    return this.rpcCall("getnetworkinfo");
   }
 
   /**
    * Get mining info
    */
   async getMiningInfo() {
-    return this.rpcCall('getmininginfo');
+    return this.rpcCall("getmininginfo");
   }
 
   /**
@@ -147,28 +183,42 @@ class ZCashService {
     minConfirmations: number = 1,
     maxConfirmations: number = 9999999
   ) {
-    return this.rpcCall('listunspent', [minConfirmations, maxConfirmations]);
+    return this.rpcCall("listunspent", [minConfirmations, maxConfirmations]);
   }
 
   /**
    * Get raw transaction
    */
   async getRawTransaction(txid: string, verbose: boolean = false) {
-    return this.rpcCall('getrawtransaction', [txid, verbose ? 1 : 0]);
+    return this.rpcCall("getrawtransaction", [txid, verbose ? 1 : 0]);
   }
 
   /**
    * Estimate fee
    */
   async estimateFee(nblocks: number = 6) {
-    return this.rpcCall('estimatefee', [nblocks]);
+    return this.rpcCall("estimatefee", [nblocks]);
   }
 
   /**
    * Get connection count
    */
   async getConnectionCount() {
-    return this.rpcCall<number>('getconnectioncount');
+    return this.rpcCall<number>("getconnectioncount");
+  }
+
+  /**
+   * List accounts created with z_getnewaccount
+   */
+  async listAccounts() {
+    return this.rpcCall("z_listaccounts");
+  }
+
+  /**
+   * List addresses managed by the wallet
+   */
+  async listAddresses() {
+    return this.rpcCall("listaddresses");
   }
 }
 

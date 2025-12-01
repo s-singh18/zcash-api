@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
-import zcashService from '../services/zcash.service';
+import { Request, Response, NextFunction } from "express";
+import zcashService from "../services/zcash.service";
 
 class ZCashController {
   /**
@@ -20,7 +20,7 @@ class ZCashController {
   /**
    * Get wallet information
    */
-  async getWalletInfo(req: Request, res: Response, next: NextFunction) {
+  async getWalletInfo(_req: Request, res: Response, next: NextFunction) {
     try {
       const data = await zcashService.getWalletInfo();
       res.json({
@@ -37,9 +37,8 @@ class ZCashController {
    */
   async getBalance(req: Request, res: Response, next: NextFunction) {
     try {
-      const minConfirmations = parseInt(
-        req.query.minConfirmations as string
-      ) || 1;
+      const minConfirmations =
+        parseInt(req.query.minConfirmations as string) || 1;
       const balance = await zcashService.getBalance(minConfirmations);
       res.json({
         success: true,
@@ -51,15 +50,151 @@ class ZCashController {
   }
 
   /**
-   * Get new address
+   * Get new account
    */
-  async getNewAddress(req: Request, res: Response, next: NextFunction) {
+  async getNewAccount(_req: Request, res: Response, next: NextFunction) {
     try {
-      const account = (req.body.account as string) || '';
-      const address = await zcashService.getNewAddress(account);
+      const accountResult = await zcashService.getNewAccount();
+      const addressResult = await zcashService.getAddressForAccount(accountResult.account);
+      console.log("New account created:", {
+        account: accountResult.account,
+        address: addressResult.address,
+        receiverTypes: addressResult.receiver_types
+      });
       res.json({
         success: true,
-        data: { address },
+        data: {
+          account: accountResult.account,
+          address: addressResult.address,
+          receiverTypes: addressResult.receiver_types
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Get address for account
+   */
+  async getAddressForAccount(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { account, receiverTypes, diversifierIndex } = req.body;
+
+      if (account === undefined || account === null) {
+        return res.status(400).json({
+          success: false,
+          error: "Account number is required",
+        });
+      }
+
+      const addressResult = await zcashService.getAddressForAccount(
+        account,
+        diversifierIndex
+      );
+
+      console.log("Address for account:", {
+        account,
+        address: addressResult.address,
+        receiverTypes: addressResult.receiver_types,
+        diversifierIndex
+      });
+
+      res.json({
+        success: true,
+        data: {
+          account,
+          address: addressResult.address,
+          receiverTypes: addressResult.receiver_types
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Get balance for account
+   */
+  async getBalanceForAccount(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { account, minconf, asOfHeight } = req.body;
+
+      if (account === undefined || account === null) {
+        return res.status(400).json({
+          success: false,
+          error: "Account number is required",
+        });
+      }
+
+      const balanceResult = await zcashService.getBalanceForAccount(
+        account,
+        minconf,
+        asOfHeight
+      );
+
+      console.log("Balance for account:", {
+        account,
+        pools: balanceResult.pools,
+        minimum_confirmations: balanceResult.minimum_confirmations
+      });
+
+      return res.json({
+        success: true,
+        data: balanceResult,
+      });
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  /**
+   * Dump private key for a transparent address
+   */
+  async dumpPrivKey(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { address } = req.params;
+      if (!address) {
+        return res.status(400).json({
+          success: false,
+          error: "Address is required",
+        });
+      }
+      const privateKey = await zcashService.dumpPrivKey(address);
+      console.log("Private key dumped for address:", address);
+      res.json({
+        success: true,
+        data: { address, privateKey },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Import private key
+   */
+  async importPrivKey(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { privateKey, label, rescan } = req.body;
+
+      if (!privateKey) {
+        return res.status(400).json({
+          success: false,
+          error: "Private key is required",
+        });
+      }
+
+      await zcashService.importPrivKey(privateKey, label, rescan);
+      console.log("Private key imported successfully", label ? `with label: ${label}` : "");
+
+      res.json({
+        success: true,
+        data: {
+          message: "Private key imported successfully",
+          label: label || null,
+          rescan: rescan !== false // defaults to true if not specified
+        },
       });
     } catch (error) {
       next(error);
@@ -75,16 +210,16 @@ class ZCashController {
       if (!txid) {
         return res.status(400).json({
           success: false,
-          error: 'Transaction ID is required',
+          error: "Transaction ID is required",
         });
       }
       const transaction = await zcashService.getTransaction(txid);
-      res.json({
+      return res.json({
         success: true,
         data: transaction,
       });
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 
@@ -115,7 +250,7 @@ class ZCashController {
       if (!address || !amount) {
         return res.status(400).json({
           success: false,
-          error: 'Address and amount are required',
+          error: "Address and amount are required",
         });
       }
 
@@ -138,7 +273,7 @@ class ZCashController {
       if (!address) {
         return res.status(400).json({
           success: false,
-          error: 'Address is required',
+          error: "Address is required",
         });
       }
       const validation = await zcashService.validateAddress(address);
@@ -162,7 +297,7 @@ class ZCashController {
       if (!blockhash) {
         return res.status(400).json({
           success: false,
-          error: 'Block hash is required',
+          error: "Block hash is required",
         });
       }
 
@@ -201,7 +336,7 @@ class ZCashController {
       if (isNaN(height)) {
         return res.status(400).json({
           success: false,
-          error: 'Valid block height is required',
+          error: "Valid block height is required",
         });
       }
 
@@ -250,12 +385,10 @@ class ZCashController {
    */
   async listUnspent(req: Request, res: Response, next: NextFunction) {
     try {
-      const minConfirmations = parseInt(
-        req.query.minConfirmations as string
-      ) || 1;
-      const maxConfirmations = parseInt(
-        req.query.maxConfirmations as string
-      ) || 9999999;
+      const minConfirmations =
+        parseInt(req.query.minConfirmations as string) || 1;
+      const maxConfirmations =
+        parseInt(req.query.maxConfirmations as string) || 9999999;
 
       const unspent = await zcashService.listUnspent(
         minConfirmations,
@@ -276,12 +409,12 @@ class ZCashController {
   async getRawTransaction(req: Request, res: Response, next: NextFunction) {
     try {
       const { txid } = req.params;
-      const verbose = req.query.verbose === 'true';
+      const verbose = req.query.verbose === "true";
 
       if (!txid) {
         return res.status(400).json({
           success: false,
-          error: 'Transaction ID is required',
+          error: "Transaction ID is required",
         });
       }
 
@@ -320,6 +453,36 @@ class ZCashController {
       res.json({
         success: true,
         data: { connections },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * List accounts created with z_getnewaccount
+   */
+  async listAccounts(_req: Request, res: Response, next: NextFunction) {
+    try {
+      const accounts = await zcashService.listAccounts();
+      res.json({
+        success: true,
+        data: accounts,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * List addresses managed by the wallet
+   */
+  async listAddresses(_req: Request, res: Response, next: NextFunction) {
+    try {
+      const addresses = await zcashService.listAddresses();
+      res.json({
+        success: true,
+        data: addresses,
       });
     } catch (error) {
       next(error);

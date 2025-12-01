@@ -56,6 +56,7 @@ API_KEY=your_api_key_here
 ```
 
 **Important**:
+
 - `ZCASH_API_KEY` is your Tatum API key for accessing the ZCash blockchain
 - `API_KEY` is your custom API key for protecting your server endpoints (use any secure random string)
 
@@ -161,23 +162,23 @@ curl -X POST \
 ### Using JavaScript/Axios
 
 ```javascript
-const axios = require('axios');
+const axios = require("axios");
 
 const client = axios.create({
-  baseURL: 'http://localhost:3000/api/zcash',
+  baseURL: "http://localhost:3000/api/zcash",
   headers: {
-    'x-api-key': 'your_api_key_here'
-  }
+    "x-api-key": "your_api_key_here",
+  },
 });
 
 // Get blockchain info
-const info = await client.get('/blockchain/info');
+const info = await client.get("/blockchain/info");
 console.log(info.data);
 
 // Send transaction
-const tx = await client.post('/transaction/send', {
-  address: 't1abc...',
-  amount: 0.1
+const tx = await client.post("/transaction/send", {
+  address: "t1abc...",
+  amount: 0.1,
 });
 console.log(tx.data);
 ```
@@ -204,8 +205,17 @@ npm test
 # Run all tests
 npm test
 
+# Run a specific test file
+npm test tests/integration/blockchain.test.ts
+npm test tests/integration/wallet.test.ts
+npm test tests/integration/transactions.test.ts
+npm test tests/integration/network.test.ts
+
 # Run tests in watch mode (re-runs on file changes)
 npm run test:watch
+
+# Run a specific test file in watch mode
+npm run test:watch -- tests/integration/blockchain.test.ts
 
 # Run tests with coverage report
 npm run test:coverage
@@ -289,6 +299,7 @@ zcash-api/
 All API responses follow this format:
 
 Success:
+
 ```json
 {
   "success": true,
@@ -297,6 +308,7 @@ Success:
 ```
 
 Error:
+
 ```json
 {
   "success": false,

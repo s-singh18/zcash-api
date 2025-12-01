@@ -44,3 +44,18 @@ export interface TransactionInfo {
   time: number;
   timereceived: number;
 }
+
+export interface PoolBalance {
+  valueZat: number;
+}
+
+export interface AccountBalancePools {
+  transparent?: PoolBalance;
+  sapling?: PoolBalance;
+  orchard?: PoolBalance;
+}
+
+export interface AccountBalanceResponse {
+  pools: AccountBalancePools;
+  minimum_confirmations: number;
+}

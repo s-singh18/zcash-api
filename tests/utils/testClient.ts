@@ -56,8 +56,33 @@ class TestClient {
     return this.client.get("/api/zcash/wallet/balance", { params });
   }
 
-  async getNewAddress(account?: string) {
-    return this.client.post("/api/zcash/wallet/newaddress", { account });
+  async getNewAccount() {
+    return this.client.post("/api/zcash/wallet/newaccount", {});
+  }
+
+  async dumpPrivateKey(address: string) {
+    return this.client.get(`/api/zcash/wallet/dumpprivkey/${address}`);
+  }
+
+  async getAddressForAccount(account: number, receiverTypes?: string[], diversifierIndex?: number) {
+    const body: any = { account };
+    if (receiverTypes !== undefined) body.receiverTypes = receiverTypes;
+    if (diversifierIndex !== undefined) body.diversifierIndex = diversifierIndex;
+    return this.client.post("/api/zcash/wallet/getaddressforaccount", body);
+  }
+
+  async getBalanceForAccount(account: number, minconf?: number, asOfHeight?: number) {
+    const body: any = { account };
+    if (minconf !== undefined) body.minconf = minconf;
+    if (asOfHeight !== undefined) body.asOfHeight = asOfHeight;
+    return this.client.post("/api/zcash/wallet/getbalanceforaccount", body);
+  }
+
+  async importPrivateKey(privateKey: string, label?: string, rescan?: boolean) {
+    const body: any = { privateKey };
+    if (label !== undefined) body.label = label;
+    if (rescan !== undefined) body.rescan = rescan;
+    return this.client.post("/api/zcash/wallet/importprivkey", body);
   }
 
   async listUnspent(minConfirmations?: number, maxConfirmations?: number) {
@@ -67,6 +92,14 @@ class TestClient {
     if (maxConfirmations !== undefined)
       params.maxConfirmations = maxConfirmations;
     return this.client.get("/api/zcash/wallet/unspent", { params });
+  }
+
+  async listAccounts() {
+    return this.client.get("/api/zcash/wallet/listaccounts");
+  }
+
+  async listAddresses() {
+    return this.client.get("/api/zcash/wallet/listaddresses");
   }
 
   // Transaction endpoints
