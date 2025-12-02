@@ -48,20 +48,58 @@ curl -X GET "http://localhost:3000/api/v1/zcash/wallet/balance?minConfirmations=
   -H "x-api-key: test-api-key-12345"
 ```
 
-### Generate New Address (Keypair)
+### Create New Account
 ```bash
-curl -X POST http://localhost:3000/api/v1/zcash/wallet/newaddress \
+curl -X POST http://localhost:3000/api/v1/zcash/wallet/newaccount \
   -H "x-api-key: test-api-key-12345" \
   -H "Content-Type: application/json" \
-  -d '{}'
+  -d '{"account": "my-account"}'
 ```
 
-Or with an account name:
+### Get Address for Account
 ```bash
-curl -X POST http://localhost:3000/api/v1/zcash/wallet/newaddress \
+curl -X POST http://localhost:3000/api/v1/zcash/wallet/getaddressforaccount \
   -H "x-api-key: test-api-key-12345" \
   -H "Content-Type: application/json" \
-  -d '{"account": "test-account"}'
+  -d '{"account": "my-account"}'
+```
+
+### Get Balance for Account
+```bash
+curl -X POST http://localhost:3000/api/v1/zcash/wallet/getbalanceforaccount \
+  -H "x-api-key: test-api-key-12345" \
+  -H "Content-Type: application/json" \
+  -d '{"account": "my-account", "minConfirmations": 1}'
+```
+
+### List Accounts
+```bash
+curl -X GET http://localhost:3000/api/v1/zcash/wallet/listaccounts \
+  -H "x-api-key: test-api-key-12345"
+```
+
+### List Addresses
+```bash
+curl -X GET http://localhost:3000/api/v1/zcash/wallet/listaddresses \
+  -H "x-api-key: test-api-key-12345"
+```
+
+### Dump Private Key
+```bash
+curl -X GET http://localhost:3000/api/v1/zcash/wallet/dumpprivkey/YOUR_ADDRESS_HERE \
+  -H "x-api-key: test-api-key-12345"
+```
+
+### Import Private Key
+```bash
+curl -X POST http://localhost:3000/api/v1/zcash/wallet/importprivkey \
+  -H "x-api-key: test-api-key-12345" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "privkey": "YOUR_PRIVATE_KEY_HERE",
+    "label": "imported-key",
+    "rescan": false
+  }'
 ```
 
 ### List Unspent Outputs
@@ -101,6 +139,44 @@ curl -X POST http://localhost:3000/api/v1/zcash/transaction/send \
     "address": "tmYXBYJj1K7vhejSec5osXK2QsGa5MTisUQ",
     "amount": 0.001,
     "comment": "Test transaction"
+  }'
+```
+
+### Send Shielded Transaction (z_sendmany)
+```bash
+curl -X POST http://localhost:3000/api/v1/zcash/transaction/z_sendmany \
+  -H "x-api-key: test-api-key-12345" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "fromaddress": "tmYXBYJj1K7vhejSec5osXK2QsGa5MTisUQ",
+    "amounts": [
+      {
+        "address": "ztestsapling1...",
+        "amount": 0.001
+      }
+    ],
+    "minconf": 1,
+    "fee": 0.0001
+  }'
+```
+
+### Get Shielded Operation Status
+```bash
+curl -X POST http://localhost:3000/api/v1/zcash/transaction/z_getoperationstatus \
+  -H "x-api-key: test-api-key-12345" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "operationIds": ["opid-12345-67890"]
+  }'
+```
+
+### Get Shielded Operation Result
+```bash
+curl -X POST http://localhost:3000/api/v1/zcash/transaction/z_getoperationresult \
+  -H "x-api-key: test-api-key-12345" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "operationIds": ["opid-12345-67890"]
   }'
 ```
 
@@ -154,12 +230,19 @@ curl -X GET "http://localhost:3000/api/v1/zcash/fee/estimate?nblocks=6" \
 
 ## Testing Workflow
 
-### 1. Generate a new keypair (address):
+### 1. Create a new account and get an address:
 ```bash
-curl -X POST http://localhost:3000/api/v1/zcash/wallet/newaddress \
+# Create account
+curl -X POST http://localhost:3000/api/v1/zcash/wallet/newaccount \
   -H "x-api-key: test-api-key-12345" \
   -H "Content-Type: application/json" \
-  -d '{}'
+  -d '{"account": "test-account"}'
+
+# Get address for account
+curl -X POST http://localhost:3000/api/v1/zcash/wallet/getaddressforaccount \
+  -H "x-api-key: test-api-key-12345" \
+  -H "Content-Type: application/json" \
+  -d '{"account": "test-account"}'
 ```
 
 ### 2. Check wallet balance:
