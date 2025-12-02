@@ -18,7 +18,7 @@ A robust Express.js backend server that provides RESTful API endpoints for inter
 
 - Node.js (v16 or higher)
 - npm or yarn
-- Tatum API key for ZCash blockchain access (get it from [https://tatum.io](https://tatum.io))
+- Tatum API key for ZCash blockchain access (get it from [https://tatum.io](https://tatum.io)) (optional)
 
 ## Installation
 
